@@ -1,9 +1,10 @@
-package main
+package rqlite
 
 import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -14,24 +15,24 @@ type TestProcess struct {
 
 // For now, all operations must succed or else program crashes.
 // TODO(VeenaArv): Consider adding logging.
-func runOperation(process TestProcess, testingInterface RQLiteTest, opLog chan string, wg *sync.WaitGroup) {
+func runOperation(process TestProcess, table Table, opLog chan string, wg *sync.WaitGroup) {
 	if process.op == "Read" {
 		opLog <- fmt.Sprintf("%d Call Read", process.pid)
-		val, err := testingInterface.Read()
+		val, err := table.Read()
 		if err != nil {
 			panic(err)
 		}
 		opLog <- fmt.Sprintf("%d Return Read %d", process.pid, val)
 
 	} else {
-		val, err := strconv.Atoi(process.op.split(" ")[1])
+		val, err := strconv.Atoi(strings.Split(process.op, " ")[1])
 		// Success is always true if err is nil.
 		// TODO(VeenaArv) Consider removing success from Write.
 		if err != nil {
 			panic(err)
 		}
 		opLog <- fmt.Sprintf("%d Call Write %d", process.pid, val)
-		success, err = testingInterface.Write(val)
+		_, err = table.Write(val)
 		if err != nil {
 			panic(err)
 		}
@@ -63,7 +64,7 @@ func writeHistory(data chan int, done chan bool) {
 	done <- true
 }
 
-func runOperations() {
+func runOperations(input string) {
 	data := make(chan string)
 	done := make(chan bool)
 	wg := sync.WaitGroup{}
@@ -71,6 +72,7 @@ func runOperations() {
 		wg.Add(1)
 		// go runOperation
 	}
+
 	// go writeHistory
 	go func() {
 		wg.Wait()
