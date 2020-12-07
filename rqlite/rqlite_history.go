@@ -2,10 +2,12 @@ package rqlite
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 // For now, all operations must succed or else program crashes.
@@ -75,7 +77,7 @@ func writeHistory(history chan string, done chan bool, filePath string) {
 	// }
 }
 
-func RunOperations(input string, filePath string, strongReadConsistency bool) {
+func RunOperations(input string, filePath string, strongReadConsistency bool, delays bool) {
 	lines := strings.Split(input, "\n")
 	numProcesses, _ := strconv.Atoi(lines[0])
 
@@ -92,7 +94,7 @@ func RunOperations(input string, filePath string, strongReadConsistency bool) {
 		channels[i] = make(chan string)
 	}
 	for pid, channel := range channels {
-		go worker(pid, channel, table, history, &wg)
+		go worker(pid, channel, table, history, &wg, delays)
 	}
 	// fmt.Println("next")
 	go writeHistory(history, done, filePath)
@@ -118,9 +120,12 @@ func RunOperations(input string, filePath string, strongReadConsistency bool) {
 	table.DeleteTable()
 }
 
-func worker(pid int, channel chan string, table *Table, history chan string, wg *sync.WaitGroup) {
+func worker(pid int, channel chan string, table *Table, history chan string, wg *sync.WaitGroup, delays bool) {
 	for true {
 		input := <-channel
+		if delays {
+			time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
+		}
 		// fmt.Printf("input %s\n", input)
 		runOperation(input, table, history, wg)
 	}
