@@ -11,17 +11,15 @@ import (
 // For now, all operations must succed or else program crashes.
 // TODO(VeenaArv): Consider adding logging.
 func runOperation(input string, table *Table, history chan string, wg *sync.WaitGroup) {
-	fmt.Printf("runOperation %s\n", input)
+	// fmt.Printf("runOperation %s\n", input)
 	inputArr := strings.Split(input, " ")
 	pid := inputArr[0]
 	op := inputArr[1]
-	fmt.Println(op)
+	// fmt.Println(op)
 	if op == "Read" {
-		fmt.Println("reading")
 		// TODO(veena): MAKE NON-BLOCKING
 		history <- fmt.Sprintf("%s Call Read", pid)
 		val, err := table.Read()
-		fmt.Println(val)
 		if err != nil {
 			panic(err)
 		}
@@ -29,26 +27,25 @@ func runOperation(input string, table *Table, history chan string, wg *sync.Wait
 
 	} else {
 		val, err := strconv.Atoi(inputArr[2])
-		fmt.Printf("writing %d", val)
 		// Success is always true if err is nil.
 		// TODO(VeenaArv) Consider removing success from Write.
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("%s Call Write %d", pid, val)
+		// fmt.Printf("%s Call Write %d", pid, val)
 		history <- fmt.Sprintf("%s Call Write %d", pid, val)
 		_, err = table.Write(val)
 		if err != nil {
 			panic(err)
 		}
 		history <- fmt.Sprintf("%s Return Write", pid)
-		fmt.Printf("%s Return Write", pid)
+		// fmt.Printf("%s Return Write", pid)
 	}
 	wg.Done()
 }
 
-func writeHistory(history chan string, done chan bool) {
-	f, err := os.Create("output/history.txt")
+func writeHistory(history chan string, done chan bool, filePath string) {
+	f, err := os.Create(filePath)
 	if err != nil {
 		panic(err)
 	}
@@ -64,7 +61,7 @@ func writeHistory(history chan string, done chan bool) {
 			done <- true
 			return
 		}
-		fmt.Printf("history %s\n", log)
+		// fmt.Printf("history %s\n", log)
 		_, err = fmt.Fprintln(f, log)
 	}
 	// for d := range data {
@@ -78,11 +75,11 @@ func writeHistory(history chan string, done chan bool) {
 	// }
 }
 
-func RunOperations(input string) {
+func RunOperations(input string, filePath string, strongReadConsistency bool) {
 	lines := strings.Split(input, "\n")
 	numProcesses, _ := strconv.Atoi(lines[0])
 
-	table := NewTable(4001, "test")
+	table := NewTable(4001, "test", strongReadConsistency)
 	table.CreateTable()
 
 	// history contains call and return logs to feed into linearizability checker.
@@ -90,22 +87,22 @@ func RunOperations(input string) {
 	done := make(chan bool)
 	channels := make([]chan string, numProcesses)
 	wg := sync.WaitGroup{}
-	fmt.Println(numProcesses)
+	// fmt.Println(numProcesses)
 	for i := 0; i < numProcesses; i++ {
 		channels[i] = make(chan string)
 	}
 	for pid, channel := range channels {
 		go worker(pid, channel, table, history, &wg)
 	}
-	fmt.Println("next")
-	go writeHistory(history, done)
+	// fmt.Println("next")
+	go writeHistory(history, done, filePath)
 	for i := 1; i < len(lines); i++ {
 		wg.Add(1)
 		pid, _ := strconv.Atoi(strings.Split(lines[i], " ")[0])
-		fmt.Println(lines[i])
+		// fmt.Println(lines[i])
 		channels[pid-1] <- lines[i]
 	}
-	fmt.Println("writing history")
+	// fmt.Println("writing history")
 
 	go func() {
 		wg.Wait()
@@ -118,12 +115,13 @@ func RunOperations(input string) {
 	} else {
 		fmt.Println("File writing failed")
 	}
+	table.DeleteTable()
 }
 
 func worker(pid int, channel chan string, table *Table, history chan string, wg *sync.WaitGroup) {
 	for true {
 		input := <-channel
-		fmt.Printf("input %s\n", input)
+		// fmt.Printf("input %s\n", input)
 		runOperation(input, table, history, wg)
 	}
 }

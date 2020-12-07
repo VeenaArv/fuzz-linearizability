@@ -1,6 +1,6 @@
 1 Call Write 1
 2 Call Write 3
+2 Return Write
 1 Return Write
 1 Call Read
-2 Return Write
-1 Return Read 3
+1 Return Read 1

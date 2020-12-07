@@ -20,8 +20,9 @@ type RQLiteTest interface {
 // Table is an RQLite table with name `name` and can be accessed using HTTP rquests at `endpoint`.
 // RQLite nodes must be setup before accessing Table.
 type Table struct {
-	port int
-	name string
+	port                  int
+	name                  string
+	strongReadConsistency bool
 }
 
 type RQLiteReadJsonResponse struct {
@@ -35,8 +36,8 @@ type RQLiteReadJsonResponse struct {
 }
 
 // NewTable creates and returns a pointer to an instance of an Table.
-func NewTable(port int, name string) *Table {
-	return &Table{port, name}
+func NewTable(port int, name string, strongReadConsistency bool) *Table {
+	return &Table{port, name, strongReadConsistency}
 }
 
 func (table Table) Read() (int, error) {
@@ -47,8 +48,10 @@ func (table Table) Read() (int, error) {
 	query := fmt.Sprintf("SELECT * FROM %s", table.name)
 	endpoint := fmt.Sprintf("http://localhost:%d/db/query?pretty&timings", table.port)
 	req, err := http.NewRequest("GET", endpoint, nil)
-	q := req.URL.Query()          // Get a copy of the query values.
-	q.Add("level", "strong")      // read consisteny always strong.
+	q := req.URL.Query() // Get a copy of the query values.
+	if table.strongReadConsistency {
+		q.Add("level", "strong") // read consisteny always strong.
+	}
 	q.Add("q", query)             // Add a new value to the set.
 	req.URL.RawQuery = q.Encode() // Encode and assign back to the original query.
 	resp, err := runQuery(req)
@@ -138,7 +141,7 @@ func runQuery(req *http.Request) (*http.Response, error) {
 }
 
 func main() {
-	t := NewTable(4001, "test")
+	t := NewTable(4001, "test", true)
 	fmt.Println(t.CreateTable())
 	fmt.Println(t.Write(1))
 	// fmt.Println(t.Write(2))
