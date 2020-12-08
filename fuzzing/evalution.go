@@ -19,6 +19,7 @@ type RunStats struct {
 	totalTime            time.Duration
 	nonLinearizableTests int
 	tests                int
+
 	// uniqueHistories int
 }
 
@@ -30,7 +31,7 @@ type AvgStats struct {
 }
 
 func (stats TestCaseStats) String() string {
-	return fmt.Sprintf("(numOperations %d time %s linearizable %s)", stats.numOperations, stats.time, stats.linearizable)
+	return fmt.Sprintf("(numOperations %d time %s linearizable %t)", stats.numOperations, stats.time, stats.linearizable)
 }
 func (stats RunStats) String() string {
 	return fmt.Sprintf("(totalTime %s nonLinearizableTests %d tests %d)", stats.totalTime, stats.nonLinearizableTests, stats.tests)
@@ -68,20 +69,35 @@ func CalcRunStats(testCases []TestCaseStats) RunStats {
 	return RunStats{testCases, *totaltime, nonLinearizableTests, tests}
 }
 
-func CheckLinearizability(input string, run int, id int) TestCaseStats {
+func WriteStats(stats fmt.Stringer, run int, id int) {
+	dirPath := fmt.Sprintf("output/stats/%T", stats)
+	filePath := fmt.Sprintf("%s/run_%d", dirPath, run)
+	_ = os.MkdirAll(dirPath, os.ModePerm)
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0664)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	_, err = f.WriteString(stats.String() + "\n")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func CheckLinearizability(input string, strongReadConsistency bool, run int, id int) TestCaseStats {
 	time := new(time.Duration)
 	dirPath := fmt.Sprintf("output/histories/run_%d", run)
 	filePath := fmt.Sprintf("%s/history_%d.txt", dirPath, id)
 	_ = os.MkdirAll(dirPath, os.ModePerm)
 	numOperations := len(strings.Split(input, " "))
-	linearizable := checkLinearizability(input, filePath, time)
+	linearizable := checkLinearizability(input, filePath, strongReadConsistency, time)
 	return TestCaseStats{numOperations, *time, linearizable}
 }
 
-func checkLinearizability(input string, historyFilePath string, timeElasped *time.Duration) bool {
+func checkLinearizability(input string, historyFilePath string, strongReadConsistency bool, timeElasped *time.Duration) bool {
 	defer timeTrack(time.Now(), "linearizability checking", timeElasped)
 	// This applies operations to rqlite and writes history to filePath.
-	rqlite.RunOperations(input, historyFilePath, false /*strongReadConsistency*/)
+	rqlite.RunOperations(input, historyFilePath, strongReadConsistency /*strongReadConsistency*/, false /*delays*/)
 	// This uses porcupine to check the history in filePath and returns
 	// true if linearizable.
 	linearizable := rqlite.CheckHistory(historyFilePath, false /*delFile*/)

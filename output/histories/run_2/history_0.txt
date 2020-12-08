@@ -1,6 +1,16 @@
-1 Call Write 1
-2 Call Write 3
-1 Return Write
-1 Call Read
-1 Return Read 1
+4 Call Write 25
+2 Call Write 8
+5 Call Read
+3 Call Write 23
+5 Return Read 0
+4 Return Write
+4 Call Read
+4 Return Read 25
 2 Return Write
+2 Call Write 27
+3 Return Write
+2 Return Write
+2 Call Write 13
+1 Call Write 6
+2 Return Write
+1 Return Write
