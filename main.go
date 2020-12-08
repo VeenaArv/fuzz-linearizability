@@ -30,6 +30,10 @@ func runSampleInput() {
 
 }
 func main() {
-	fuzzing.RandomizedTesting(15, false, 1)
-	fuzzing.RandomizedTestingWithDelays(15, false, 2)
+	// fuzzing.RandomizedTesting(15, false, 1)
+	// fuzzing.RandomizedTestingWithDelays(15, false, 2)
+	data, _ := ioutil.ReadFile("data/custom_test.txt")
+	content := string(data)
+	testCaseStats := fuzzing.CheckLinearizability(content, false, 3, 1)
+	fuzzing.WriteStats(testCaseStats, 3, 1)
 }

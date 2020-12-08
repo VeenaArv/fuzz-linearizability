@@ -50,7 +50,9 @@ func (table Table) Read() (int, error) {
 	req, err := http.NewRequest("GET", endpoint, nil)
 	q := req.URL.Query() // Get a copy of the query values.
 	if table.strongReadConsistency {
-		q.Add("level", "strong") // read consisteny always strong.
+		q.Add("level", "strong") // raft
+	} else {
+		q.Add("level", "none")
 	}
 	q.Add("q", query)             // Add a new value to the set.
 	req.URL.RawQuery = q.Encode() // Encode and assign back to the original query.
