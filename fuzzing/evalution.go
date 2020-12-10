@@ -84,20 +84,22 @@ func WriteStats(stats fmt.Stringer, run int, id int) {
 	}
 }
 
-func CheckLinearizability(input string, strongReadConsistency bool, run int, id int) TestCaseStats {
+func CheckLinearizability(input string, strongReadConsistency bool, delays bool, run int, id int) TestCaseStats {
 	time := new(time.Duration)
 	dirPath := fmt.Sprintf("output/histories/run_%d", run)
 	filePath := fmt.Sprintf("%s/history_%d.txt", dirPath, id)
 	_ = os.MkdirAll(dirPath, os.ModePerm)
-	numOperations := len(strings.Split(input, " "))
-	linearizable := checkLinearizability(input, filePath, strongReadConsistency, time)
+	numOperations := strings.Count(input, "\n")
+	// fmt.Println(input)
+	// fmt.Println(numOperations)
+	linearizable := checkLinearizability(input, filePath, strongReadConsistency, delays, time)
 	return TestCaseStats{numOperations, *time, linearizable}
 }
 
-func checkLinearizability(input string, historyFilePath string, strongReadConsistency bool, timeElasped *time.Duration) bool {
+func checkLinearizability(input string, historyFilePath string, strongReadConsistency bool, delays bool, timeElasped *time.Duration) bool {
 	defer timeTrack(time.Now(), "linearizability checking", timeElasped)
 	// This applies operations to rqlite and writes history to filePath.
-	rqlite.RunOperations(input, historyFilePath, strongReadConsistency /*strongReadConsistency*/, false /*delays*/)
+	rqlite.RunOperations(input, historyFilePath, strongReadConsistency /*strongReadConsistency*/, delays /*delays*/)
 	// This uses porcupine to check the history in filePath and returns
 	// true if linearizable.
 	linearizable := rqlite.CheckHistory(historyFilePath, false /*delFile*/)
@@ -108,5 +110,5 @@ func checkLinearizability(input string, historyFilePath string, strongReadConsis
 func timeTrack(start time.Time, name string, timeElasped *time.Duration) {
 	elapsed := time.Since(start)
 	*timeElasped = elapsed
-	fmt.Printf("%s took %s", name, elapsed)
+	// fmt.Printf("%s took %s", name, elapsed)
 }

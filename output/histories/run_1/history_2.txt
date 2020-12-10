@@ -1,9 +1,9 @@
 3 Call Read
-5 Call Read
 1 Call Write 3
+5 Call Read
 4 Call Write 5
-5 Return Read 0
 3 Return Read 0
+5 Return Read 0
 1 Return Write
 1 Call Read
 1 Return Read 3

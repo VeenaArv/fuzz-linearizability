@@ -96,15 +96,12 @@ func RunOperations(input string, filePath string, strongReadConsistency bool, de
 	for pid, channel := range channels {
 		go worker(pid, channel, table, history, &wg, delays)
 	}
-	// fmt.Println("next")
 	go writeHistory(history, done, filePath)
 	for i := 1; i < len(lines); i++ {
 		wg.Add(1)
 		pid, _ := strconv.Atoi(strings.Split(lines[i], " ")[0])
-		// fmt.Println(lines[i])
 		channels[pid-1] <- lines[i]
 	}
-	// fmt.Println("writing history")
 
 	go func() {
 		wg.Wait()
@@ -113,7 +110,7 @@ func RunOperations(input string, filePath string, strongReadConsistency bool, de
 	}()
 	d := <-done
 	if d == true {
-		fmt.Println("File written successfully")
+		// fmt.Println("File written successfully")
 	} else {
 		fmt.Println("File writing failed")
 	}
@@ -130,8 +127,3 @@ func worker(pid int, channel chan string, table *Table, history chan string, wg 
 		runOperation(input, table, history, wg)
 	}
 }
-
-// func main() {
-// 	content, err := ioutil.ReadFile("data.sample_history.txt")
-// 	fmt.Println(string(content))
-// }

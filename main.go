@@ -16,7 +16,7 @@ func runSampleInput() {
 		var testcases []fuzzing.TestCaseStats
 		for i, file := range files {
 			input, _ := ioutil.ReadFile(file)
-			stats := fuzzing.CheckLinearizability(string(input), false /*strongReadConsistency*/, run, i)
+			stats := fuzzing.CheckLinearizability(string(input), false /*strongReadConsistency*/, false /*delays */, run, i)
 			testcases = append(testcases, stats)
 		}
 		runs = append(runs, fuzzing.CalcRunStats(testcases))
@@ -30,10 +30,15 @@ func runSampleInput() {
 
 }
 func main() {
-	// fuzzing.RandomizedTesting(15, false, 1)
+	for i := 8; i < 15; i++ {
+		fuzzing.RandomizedTesting(20, i, false, i-7)
+	}
+	// for i := 8; i < 15; i++ {
+	// 	fuzzing.RandomizedTesting(20, i, false, i)
+	// }
 	// fuzzing.RandomizedTestingWithDelays(15, false, 2)
-	data, _ := ioutil.ReadFile("data/custom_test.txt")
-	content := string(data)
-	testCaseStats := fuzzing.CheckLinearizability(content, false, 3, 1)
-	fuzzing.WriteStats(testCaseStats, 3, 1)
+	// data, _ := ioutil.ReadFile("data/custom_test.txt")
+	// content := string(data)
+	// testCaseStats := fuzzing.CheckLinearizability(content, false, 3, 1)
+	// fuzzing.WriteStats(testCaseStats, 3, 1)
 }

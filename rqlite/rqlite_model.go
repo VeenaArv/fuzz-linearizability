@@ -1,7 +1,6 @@
 package rqlite
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -81,7 +80,7 @@ func CheckHistory(filePath string, delFile bool) bool {
 		events = append(events, makeEvent(line, id))
 		// fmt.Println(events)
 	}
-	fmt.Println(events)
+	// fmt.Println(events)
 	// CheckEvents
 	ok := porcupine.CheckEvents(ReadWriteModel(), events)
 	if delFile {
