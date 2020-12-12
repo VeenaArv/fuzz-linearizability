@@ -13,8 +13,13 @@ import (
 // For now, all operations must succed or else program crashes.
 // TODO(VeenaArv): Consider adding logging.
 func runOperation(input string, table *Table, history chan string, wg *sync.WaitGroup) {
+	// fmt.Println()
 	// fmt.Printf("runOperation %s\n", input)
 	inputArr := strings.Split(input, " ")
+	// if len(inputArr) < 2 {
+	// 	wg.Done()
+	// 	return
+	// }
 	pid := inputArr[0]
 	op := inputArr[1]
 	// fmt.Println(op)
@@ -28,15 +33,17 @@ func runOperation(input string, table *Table, history chan string, wg *sync.Wait
 		history <- fmt.Sprintf("%s Return Read %d", pid, val)
 
 	} else {
-		val, err := strconv.Atoi(inputArr[2])
+		v := strings.Split(inputArr[2], "\r")[0]
+		val, err := strconv.ParseInt(v, 10, 0)
+		ival := int(val)
 		// Success is always true if err is nil.
 		// TODO(VeenaArv) Consider removing success from Write.
 		if err != nil {
 			panic(err)
 		}
 		// fmt.Printf("%s Call Write %d", pid, val)
-		history <- fmt.Sprintf("%s Call Write %d", pid, val)
-		_, err = table.Write(val)
+		history <- fmt.Sprintf("%s Call Write %d", pid, ival)
+		_, err = table.Write(ival)
 		if err != nil {
 			panic(err)
 		}
@@ -51,8 +58,11 @@ func writeHistory(history chan string, done chan bool, filePath string) {
 	if err != nil {
 		panic(err)
 	}
+	// c := 0
 	for true {
 		log := <-history
+		fmt.Println(log)
+		// c++
 		if log == "done" {
 			err = f.Close()
 			if err != nil {
@@ -79,7 +89,7 @@ func writeHistory(history chan string, done chan bool, filePath string) {
 
 func RunOperations(input string, filePath string, strongReadConsistency bool, delays bool) {
 	lines := strings.Split(input, "\n")
-	numProcesses, _ := strconv.Atoi(lines[0])
+	numProcesses := 5
 
 	table := NewTable(4001, "test", strongReadConsistency)
 	table.CreateTable()
@@ -118,12 +128,20 @@ func RunOperations(input string, filePath string, strongReadConsistency bool, de
 }
 
 func worker(pid int, channel chan string, table *Table, history chan string, wg *sync.WaitGroup, delays bool) {
+	// c := 0
 	for true {
+		// c++
 		input := <-channel
 		if delays {
 			time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
 		}
 		// fmt.Printf("input %s\n", input)
-		runOperation(input, table, history, wg)
+		inputArr := strings.Split(input, " ")
+		if len(inputArr) < 2 {
+			continue
+		} else {
+			runOperation(input, table, history, wg)
+		}
 	}
+	// fmt.Println(c)
 }

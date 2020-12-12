@@ -102,8 +102,8 @@ func checkLinearizability(input string, historyFilePath string, strongReadConsis
 	rqlite.RunOperations(input, historyFilePath, strongReadConsistency /*strongReadConsistency*/, delays /*delays*/)
 	// This uses porcupine to check the history in filePath and returns
 	// true if linearizable.
-	linearizable := rqlite.CheckHistory(historyFilePath, false /*delFile*/)
-	// fmt.Println(linearizable)
+	linearizable := rqlite.CheckHistory("newHistory.txt", false /*delFile*/)
+	fmt.Println(linearizable)
 	return linearizable
 }
 
