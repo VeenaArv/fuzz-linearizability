@@ -57,6 +57,9 @@ func (table Table) Read() (int, error) {
 	q.Add("q", query)             // Add a new value to the set.
 	req.URL.RawQuery = q.Encode() // Encode and assign back to the original query.
 	resp, err := runQuery(req)
+
+	defer resp.Body.Close()
+
 	if err != nil {
 		return -1, err
 	}
@@ -84,7 +87,10 @@ func (table Table) Write(value int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = runQuery(req)
+	resp, err := runQuery(req)
+
+	defer resp.Body.Close()
+
 	// Handles resonpse.
 	if err != nil {
 		return false, err
@@ -104,7 +110,10 @@ func (table Table) CreateTable() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = runQuery(req)
+	resp, err := runQuery(req)
+
+	defer resp.Body.Close()
+
 	// Handles resonpse.
 	if err != nil {
 		return false, err
@@ -119,7 +128,10 @@ func (table Table) DeleteTable() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = runQuery(req)
+	resp, err := runQuery(req)
+
+	defer resp.Body.Close()
+
 	// Handles resonpse.
 	if err != nil {
 		return false, err

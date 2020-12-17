@@ -69,9 +69,9 @@ func CalcRunStats(testCases []TestCaseStats) RunStats {
 	return RunStats{testCases, *totaltime, nonLinearizableTests, tests}
 }
 
-func WriteStats(stats fmt.Stringer, run int, id int) {
-	dirPath := fmt.Sprintf("output/stats/%T", stats)
-	filePath := fmt.Sprintf("%s/run_%d", dirPath, run)
+func WriteStats(stats fmt.Stringer, params AlgoRunParams, id int) {
+	dirPath := fmt.Sprintf("output/stats/%s/%T", params.Version, stats)
+	filePath := fmt.Sprintf("%s/run_%d", dirPath, params.Run)
 	_ = os.MkdirAll(dirPath, os.ModePerm)
 	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0664)
 	if err != nil {
@@ -84,25 +84,25 @@ func WriteStats(stats fmt.Stringer, run int, id int) {
 	}
 }
 
-func CheckLinearizability(input string, strongReadConsistency bool, delays bool, run int, id int) TestCaseStats {
+func CheckLinearizability(input string, params AlgoRunParams, id int) TestCaseStats {
 	time := new(time.Duration)
-	dirPath := fmt.Sprintf("output/histories/run_%d", run)
+	dirPath := fmt.Sprintf("output/histories/%s/run_%d", params.Version, params.Run)
 	filePath := fmt.Sprintf("%s/history_%d.txt", dirPath, id)
 	_ = os.MkdirAll(dirPath, os.ModePerm)
 	numOperations := strings.Count(input, "\n")
 	// fmt.Println(input)
 	// fmt.Println(numOperations)
-	linearizable := checkLinearizability(input, filePath, strongReadConsistency, delays, time)
+	linearizable := checkLinearizability(input, filePath, params, time)
 	return TestCaseStats{numOperations, *time, linearizable}
 }
 
-func checkLinearizability(input string, historyFilePath string, strongReadConsistency bool, delays bool, timeElasped *time.Duration) bool {
+func checkLinearizability(input string, historyFilePath string, params AlgoRunParams, timeElasped *time.Duration) bool {
 	defer timeTrack(time.Now(), "linearizability checking", timeElasped)
 	// This applies operations to rqlite and writes history to filePath.
-	rqlite.RunOperations(input, historyFilePath, strongReadConsistency /*strongReadConsistency*/, delays /*delays*/)
+	rqlite.RunOperations(input, historyFilePath, params.StrongReadConsistency, params.Delays)
 	// This uses porcupine to check the history in filePath and returns
 	// true if linearizable.
-	linearizable := rqlite.CheckHistory("newHistory.txt", false /*delFile*/)
+	linearizable := rqlite.CheckHistory(historyFilePath, false /*delFile*/)
 	fmt.Println(linearizable)
 	return linearizable
 }

@@ -16,7 +16,10 @@ func runSampleInput() {
 		var testcases []fuzzing.TestCaseStats
 		for i, file := range files {
 			input, _ := ioutil.ReadFile(file)
-			stats := fuzzing.CheckLinearizability(string(input), false /*strongReadConsistency*/, false /*delays */, run, i)
+			stats := fuzzing.CheckLinearizability(string(input),
+				fuzzing.AlgoRunParams{0 /*NumEvents*/, 0 /*NumTests*/, run, /*Run*/
+					false /*StrongReadConsistency*/, false, /*Delays*/
+					"sample" /*Version*/}, i)
 			testcases = append(testcases, stats)
 		}
 		runs = append(runs, fuzzing.CalcRunStats(testcases))
@@ -30,12 +33,12 @@ func runSampleInput() {
 
 }
 func main() {
-	for i := 8; i < 15; i++ {
-		fuzzing.RandomizedTesting(20, i, false, i-7)
+	// runSampleInput()
+	for i := 10; i < 30; i++ {
+		fuzzing.RandomizedTesting(fuzzing.AlgoRunParams{i /*NumEvents*/, 10 /*NumTests*/, 1 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "random" /*Version*/})
 	}
-	// for i := 8; i < 15; i++ {
-	// 	fuzzing.RandomizedTesting(20, i, false, i)
-	// }
+	fuzzing.GeneticAlgoWithIncreasingTestCases(fuzzing.AlgoRunParams{5 /*NumEvents*/, 10 /*NumTests*/, 2 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "genetic" /*Version*/})
+
 	// fuzzing.RandomizedTestingWithDelays(15, false, 2)
 	// data, _ := ioutil.ReadFile("data/custom_test.txt")
 	// content := string(data)

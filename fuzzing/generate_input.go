@@ -13,6 +13,15 @@ type Event struct {
 	pid int
 }
 
+type AlgoRunParams struct {
+	NumEvents             int
+	NumTests              int
+	Run                   int
+	StrongReadConsistency bool
+	Delays                bool
+	Version               string // Used to organized output files to type of algo.
+}
+
 func createEvents(numEvents int) []Event {
 	events := []Event{}
 
@@ -78,178 +87,68 @@ func numProcesses(events []Event) string {
 	return strconv.Itoa(maxPid)
 }
 
-func GeneticAlgo(numTests int, strongReadConsistency bool, numEvents int, run int) {
+func GeneticAlgoWithIncreasingTestCases(params AlgoRunParams) {
+	// find optimal value of numEvents to get linearizability errors.
+	for numEvents := 10; numEvents < 30; numEvents++ {
+		params = AlgoRunParams{numEvents, params.NumTests, params.Run, params.StrongReadConsistency, params.Delays, params.Version}
+		if GeneticAlgo(params) {
+			break
+		}
+	}
+}
+
+func GeneticAlgo(params AlgoRunParams) bool {
 	id := 0
-	events := createEvents(numEvents)
+	events := createEvents(params.NumEvents)
 	prevEvents := [][]Event{events}
 	prevIsLinearizable := false
+	foundNonLinearizableEvents := false
 	flipIndex := 0
-	for id < 50 {
+	for id < params.NumTests {
 		// filePath := fmt.Sprintf("%s/history_%d.txt", historyDirPath, id)
 		if prevIsLinearizable {
-			events = createEvents(numEvents)
+			events = createEvents(params.NumEvents)
 			flipIndex = 0
 		} else {
 			events = flipEvent(events, flipIndex)
 			flipIndex++
+			if flipIndex == params.NumEvents {
+				prevIsLinearizable = true
+			}
 		}
 		diff := compareEvents(events, prevEvents)
 		if !diff {
 			continue
 		}
 		prevEvents = append(prevEvents, events)
-		testCaseStats := runTestCase(events, run, id, strongReadConsistency, false)
+		testCaseStats := runTestCase(events, params, id)
 		prevIsLinearizable = testCaseStats.linearizable
+		if !prevIsLinearizable {
+			foundNonLinearizableEvents = true
+		}
 		id++
 	}
+	return foundNonLinearizableEvents
 }
 
-func RandomizedTesting(numTests int, numEvents int, strongReadConsistency bool, run int) {
-	randomizedTesting(numTests, strongReadConsistency, run, false, numEvents /*numEvents*/)
-}
-
-func RandomizedTestingWithDelays(numTests int, strongReadConsistency bool, run int) {
-	randomizedTesting(numTests, strongReadConsistency, run, true, 8 /*numEvents*/)
-}
-
-func randomizedTesting(numTests int, strongReadConsistency bool, run int, delays bool, numEvents int) {
+func RandomizedTesting(params AlgoRunParams) {
 	prevEvents := [][]Event{}
 	id := 0
-	for id < numTests {
-		events := createEvents(numEvents)
+	for id < params.NumTests {
+		events := createEvents(params.NumEvents)
 		diff := compareEvents(events, prevEvents)
 		prevEvents = append(prevEvents, events)
 		if diff {
-			runTestCase(events, run, id, strongReadConsistency, delays)
+			runTestCase(events, params, id)
 			id++
 		}
 	}
 }
 
-func runTestCase(events []Event, run int, id int, strongReadConsistency bool, delays bool) TestCaseStats {
+func runTestCase(events []Event, params AlgoRunParams, id int) TestCaseStats {
 	content := eventsToString(events)
 	// fmt.Println(content)
-	testCaseStats := CheckLinearizability(content, strongReadConsistency, delays, run, id)
-	WriteStats(testCaseStats, run, id)
+	testCaseStats := CheckLinearizability(content, params, id)
+	WriteStats(testCaseStats, params, id)
 	return testCaseStats
 }
-
-// func Run() {
-// 	// files := []string{"go_fuzz_integration/corpus/input1.txt",
-// 	// 	"go_fuzz_integration/corpus/input2.txt",
-// 	// 	"go_fuzz_integration/corpus/input3.txt"}
-
-// 	// non-repeating events, network delays, mutation instead of random
-// 	// non-repeating histories rquires running the events so test cases arent decreased no?
-// 	strategies := []int{0, 1, 2}
-
-// 	for s := range strategies {
-// 		switch s {
-// 		case 0:
-// 			prevEvents := [][]Event{}
-// 			for i := 0; i < 10; i++ {
-// 				events := createEvents(8)
-// 				prevEvents = append(prevEvents, events)
-// 				diff := compareEvents(events, prevEvents)
-// 				if diff {
-// 					filePath := fmt.Sprintf("output/histories/history_%d.txt", i)
-// 					content := ""
-// 					content = content + numProcesses(events) + "\n"
-// 					for _, e := range events {
-// 						content = content + strconv.Itoa(e.pid) + " " + e.op + " " + strconv.Itoa(e.val) + "\n"
-// 					}
-// 					rqlite.RunOperations(string(content), filePath, false /*strongReadConsistency*/, false /*delays*/)
-// 					fmt.Println(rqlite.CheckHistory(filePath, false /*delFile*/))
-// 				}
-// 				// else {
-// 				// 	i--
-// 				// }
-// 			}
-// 		// case 1:
-// 		// 	// prevHistories := []string{}
-// 		// 	// for i := 0; i < 10; i++ {
-// 		// 	// 	events := createEvents()
-// 		// 	// 	filePath := fmt.Sprintf("output/histories/history_%d.txt", i)
-// 		// 	// 	content := ""
-// 		// 	// 	content = content + numProcesses(events) + "\n"
-// 		// 	// 	for _, e := range events {
-// 		// 	// 		content = content + strconv.Itoa(e.pid) + " " + e.op + " " + strconv.Itoa(e.val) + "\n"
-// 		// 	// 	}
-// 		// 	// 	rqlite.RunOperations(string(content), filePath, false /*strongReadConsistency*/, false /*delays*/)
-// 		// 	// 	fmt.Println(rqlite.CheckHistory(filePath, false /*delFile*/))
-// 		// 	// 	diff := compareHistory(history, prevHistories)
-// 		// 	// 	if diff {
-// 		// 	// 		testHistory(history)
-// 		// 	// 	}
-// 		// 		// else {
-// 		// 		// 	i--
-// 		// 		// }
-// 		// 		// fmt.Println(diff)
-// 		// 	// }
-// 		case 1:
-// 			for i := 0; i < 10; i++ {
-// 				events := createEvents(8)
-// 				filePath := fmt.Sprintf("output/histories/history_%d.txt", i)
-// 				content := ""
-// 				content = content + numProcesses(events) + "\n"
-// 				for _, e := range events {
-// 					content = content + strconv.Itoa(e.pid) + " " + e.op
-// 					if e.op == "Write" {
-// 						content += " " + strconv.Itoa(e.val)
-// 					}
-// 					content += "\n"
-// 				}
-// 				content = strings.TrimSpace(content)
-// 				fmt.Println("content")
-// 				fmt.Println(content)
-// 				rqlite.RunOperations(string(content), filePath, false /*strongReadConsistency*/, true /*delays*/)
-// 				fmt.Println(rqlite.CheckHistory(filePath, false /*delFile*/))
-// 			}
-// 		case 2:
-// 			for i := 0; i < 10; i++ {
-// 				events := createEvents(8)
-// 				filePath := fmt.Sprintf("output/histories/history_%d.txt", i)
-// 				content := ""
-// 				content = content + numProcesses(events) + "\n"
-// 				for _, e := range events {
-// 					content = content + strconv.Itoa(e.pid) + " " + e.op + " " + strconv.Itoa(e.val) + "\n"
-// 				}
-// 				rqlite.RunOperations(string(content), filePath, false /*strongReadConsistency*/, false /*delays*/)
-// 				h := rqlite.CheckHistory(filePath, false /*delFile*/)
-// 				fmt.Println(h)
-// 				if h == false {
-// 					for j := 0; j < 8; j++ {
-// 						new_events := events
-// 						if new_events[j].op == "Write" {
-// 							new_events[j].op = "Read"
-// 						} else {
-// 							new_events[j].op = "Write"
-// 						}
-// 						content := ""
-// 						content = content + numProcesses(new_events) + "\n"
-// 						for _, e := range new_events {
-// 							content = content + strconv.Itoa(e.pid) + " " + e.op + " " + strconv.Itoa(e.val) + "\n"
-// 						}
-// 						rqlite.RunOperations(string(content), filePath, false /*strongReadConsistency*/, false /*delays*/)
-// 						fmt.Println(rqlite.CheckHistory(filePath, false /*delFile*/))
-// 					}
-// 					break
-// 				}
-// 			}
-// 		default:
-// 			continue
-// 		}
-// 	}
-
-// 	// for i, file := range files {
-// 	// filePath := fmt.Sprintf("output/histories/history_%d.txt", i)
-// 	// content, _ := ioutil.ReadFile(file)
-// 	// This applies operations to rqlite and writes history to filePath.
-// 	// rqlite.RunOperations(string(content), filePath, false /*strongReadConsistency*/)
-// 	// This uses porcupine to check the history in filePath and returns
-// 	// true if linearizable.
-// 	// fmt.Println(rqlite.CheckHistory(filePath, false /*delFile*/))
-// 	// }
-// 	// fmt.Println(rqlite.TestHistory())
-
-// }
