@@ -1,6 +1,7 @@
 package fuzzing
 
 import (
+	"errors"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -99,9 +100,9 @@ func GeneticAlgoWithIncreasingTestCases(params AlgoRunParams) {
 
 func GeneticAlgo(params AlgoRunParams) bool {
 	id := 0
-	events := createEvents(params.NumEvents)
-	prevEvents := [][]Event{events}
-	prevIsLinearizable := false
+	var events []Event
+	var prevEvents = [][]Event{}
+	prevIsLinearizable := true
 	foundNonLinearizableEvents := false
 	flipIndex := 0
 	for id < params.NumTests {
@@ -110,7 +111,11 @@ func GeneticAlgo(params AlgoRunParams) bool {
 			events = createEvents(params.NumEvents)
 			flipIndex = 0
 		} else {
+			prevOp := events[flipIndex].op
 			events = flipEvent(events, flipIndex)
+			if prevOp == events[flipIndex].op {
+				panic(errors.New("index not flipped"))
+			}
 			flipIndex++
 			if flipIndex == params.NumEvents {
 				prevIsLinearizable = true

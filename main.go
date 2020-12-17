@@ -33,12 +33,13 @@ func runSampleInput() {
 
 }
 func main() {
+	// fmt.Println(rqlite.TestHistory())
 	// runSampleInput()
 	for i := 10; i < 30; i++ {
 		fuzzing.RandomizedTesting(fuzzing.AlgoRunParams{i /*NumEvents*/, 10 /*NumTests*/, 1 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "random" /*Version*/})
 	}
 	fuzzing.GeneticAlgoWithIncreasingTestCases(fuzzing.AlgoRunParams{5 /*NumEvents*/, 10 /*NumTests*/, 2 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "genetic" /*Version*/})
-
+	fuzzing.GeneticAlgo(fuzzing.AlgoRunParams{70 /*NumEvents*/, 10 /*NumTests*/, 3 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "genetic_2" /*Version*/})
 	// fuzzing.RandomizedTestingWithDelays(15, false, 2)
 	// data, _ := ioutil.ReadFile("data/custom_test.txt")
 	// content := string(data)

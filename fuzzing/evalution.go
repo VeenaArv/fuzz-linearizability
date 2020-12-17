@@ -103,7 +103,7 @@ func checkLinearizability(input string, historyFilePath string, params AlgoRunPa
 	// This uses porcupine to check the history in filePath and returns
 	// true if linearizable.
 	linearizable := rqlite.CheckHistory(historyFilePath, false /*delFile*/)
-	fmt.Println(linearizable)
+	// fmt.Println(linearizable)
 	return linearizable
 }
 

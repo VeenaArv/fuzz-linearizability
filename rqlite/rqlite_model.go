@@ -1,6 +1,7 @@
 package rqlite
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -69,18 +70,19 @@ func getEventId(event string, pendingEvents map[string]int, currentID *int) int 
 func CheckHistory(filePath string, delFile bool) bool {
 	// Reads History
 	data, _ := ioutil.ReadFile(filePath)
+	if string(data) == "" {
+		panic(errors.New("empty file"))
+	}
 	lines := strings.Split(string(data), "\n")
 	var events []porcupine.Event
 	var pendingEvents map[string]int = make(map[string]int)
+
 	currentID := -1
 	for i := 0; i < len(lines)-1; i++ {
 		line := lines[i]
-		// fmt.Println(line)
 		id := getEventId(line, pendingEvents, &currentID)
 		events = append(events, makeEvent(line, id))
-		// fmt.Println(events)
 	}
-	// fmt.Println(events)
 	// CheckEvents
 	ok := porcupine.CheckEvents(ReadWriteModel(), events)
 	if delFile {
