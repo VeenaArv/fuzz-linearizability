@@ -93,6 +93,7 @@ func CheckLinearizability(input string, params AlgoRunParams, id int) TestCaseSt
 	// fmt.Println(input)
 	// fmt.Println(numOperations)
 	linearizable := checkLinearizability(input, filePath, params, time)
+	fmt.Println(linearizable)
 	return TestCaseStats{numOperations, *time, linearizable}
 }
 

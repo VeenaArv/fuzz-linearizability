@@ -10,6 +10,13 @@ import (
 	"time"
 )
 
+func min(a, b int) int {
+    if a <= b {
+        return a
+    }
+    return b
+}
+
 // For now, all operations must succed or else program crashes.
 // TODO(VeenaArv): Consider adding logging.
 func runOperation(input string, table *Table, history chan string, wg *sync.WaitGroup) {
@@ -91,7 +98,7 @@ func RunOperations(input string, filePath string, strongReadConsistency bool, de
 	lines := strings.Split(input, "\n")
 	numProcesses := 5
 
-	table := NewTable(4001, "test", strongReadConsistency)
+	table := NewTable(4001, "test", true)
 	table.CreateTable()
 
 	// history contains call and return logs to feed into linearizability checker.
@@ -107,10 +114,21 @@ func RunOperations(input string, filePath string, strongReadConsistency bool, de
 		go worker(pid, channel, table, history, &wg, delays)
 	}
 	go writeHistory(history, done, filePath)
-	for i := 1; i < len(lines); i++ {
+
+	for i := 1; i < len(lines)-1; i++ {
 		wg.Add(1)
-		pid, _ := strconv.Atoi(strings.Split(lines[i], " ")[0])
-		channels[pid-1] <- lines[i]
+	}
+	
+	split := len(lines)/5
+	for i := 0; i < len(lines)-split; i += split {
+		batch := lines[i:min(i + split, len(lines))]
+
+		go func(){
+			for j:= 0; j < len(batch); j++ {
+				pid, _ := strconv.Atoi(strings.Split(lines[j], " ")[0])
+				channels[pid-1] <- batch[j]		
+			}
+		}()
 	}
 
 	go func() {
