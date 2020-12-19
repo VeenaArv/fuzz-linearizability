@@ -100,7 +100,8 @@ func CheckLinearizability(input string, params AlgoRunParams, id int) TestCaseSt
 func checkLinearizability(input string, historyFilePath string, params AlgoRunParams, timeElasped *time.Duration) bool {
 	defer timeTrack(time.Now(), "linearizability checking", timeElasped)
 	// This applies operations to rqlite and writes history to filePath.
-	rqlite.RunOperations(input, historyFilePath, params.StrongReadConsistency, params.Delays)
+	go rqlite.RunOperations(input, historyFilePath, params.StrongReadConsistency, params.Delays)
+	time.Sleep(10 * time.Second)
 	// This uses porcupine to check the history in filePath and returns
 	// true if linearizable.
 	linearizable := rqlite.CheckHistory(historyFilePath, false /*delFile*/)
