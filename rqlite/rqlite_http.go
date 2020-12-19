@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 )
 
@@ -41,18 +40,13 @@ func NewTable(port int, name string, strongReadConsistency bool) *Table {
 	return &Table{port, name, strongReadConsistency}
 }
 
-func randPort() int {
-	ports := []int{4001, 4003, 4005, 4007}
-	return ports[rand.Intn(4)]
-}
-
 func (table Table) Read() (int, error) {
 	// Always enable strong consistency which garuntees linearizability. See
 	// https://github.com/rqlite/rqlite/blob/master/DOC/CONSISTENCY.md for
 	//different consistency garuntees.
 	// TODO(VeenaArv): add flag to switch between different consistency levels.
 	query := fmt.Sprintf("SELECT * FROM %s", table.name)
-	endpoint := fmt.Sprintf("http://localhost:%d/db/query?pretty&timings", randPort())
+	endpoint := fmt.Sprintf("http://localhost:%d/db/query?pretty&timings", table.port)
 	req, err := http.NewRequest("GET", endpoint, nil)
 	q := req.URL.Query() // Get a copy of the query values.
 	if table.strongReadConsistency {
@@ -111,7 +105,7 @@ func (table Table) CreateTable() (bool, error) {
 	create_query := fmt.Sprintf("\"CREATE TABLE %s (value INTEGER)\"", table.name)
 	initialize_query := fmt.Sprintf("\"INSERT INTO %s(value) VALUES(0)\"", table.name)
 	query := "[" + create_query + ", " + initialize_query + "]"
-	endpoint := fmt.Sprintf("http://localhost:%d/db/execute?pretty&timings&transaction", randPort())
+	endpoint := fmt.Sprintf("http://localhost:%d/db/execute?pretty&timings&transaction", table.port)
 	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer([]byte(query)))
 	if err != nil {
 		return false, err

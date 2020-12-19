@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-
-	// "fuzz-linearizability/rqlite"
 	"fuzz-linearizability/fuzzing"
 	"io/ioutil"
 )
@@ -34,24 +32,17 @@ func runSampleInput() {
 	// fmt.Println(rqlite.TestHistory())
 
 }
-
 func main() {
 	// fmt.Println(rqlite.TestHistory())
 	// runSampleInput()
-	// for i := 10; i < 30; i++ {
-	// fuzzing.RandomizedTesting(fuzzing.AlgoRunParams{i /*NumEvents*/, 10 /*NumTests*/, 1 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "random" /*Version*/})
-	// }
-
-	fuzzing.RandomizedTesting(fuzzing.AlgoRunParams{20 /*NumEvents*/, 1 /*NumTests*/, 1 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "random" /*Version*/})
-
-	// fuzzing.GeneticAlgoWithIncreasingTestCases(fuzzing.AlgoRunParams{5 /*NumEvents*/, 10 /*NumTests*/, 2 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "genetic" /*Version*/})
-	// fuzzing.GeneticAlgo(fuzzing.AlgoRunParams{70 /*NumEvents*/, 10 /*NumTests*/, 3 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "genetic_2" /*Version*/})
+	for i := 10; i < 30; i++ {
+		fuzzing.RandomizedTesting(fuzzing.AlgoRunParams{i /*NumEvents*/, 10 /*NumTests*/, 1 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "random" /*Version*/})
+	}
+	fuzzing.GeneticAlgoWithIncreasingTestCases(fuzzing.AlgoRunParams{5 /*NumEvents*/, 10 /*NumTests*/, 2 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "genetic" /*Version*/})
+	fuzzing.GeneticAlgo(fuzzing.AlgoRunParams{70 /*NumEvents*/, 10 /*NumTests*/, 3 /*Run*/, false /*StrongReadConsistency*/, false /*Delays*/, "genetic_2" /*Version*/})
 	// fuzzing.RandomizedTestingWithDelays(15, false, 2)
-	// data, _ := ioutil.ReadFile("output/histories/random/history_0.txt")
+	// data, _ := ioutil.ReadFile("data/custom_test.txt")
 	// content := string(data)
 	// testCaseStats := fuzzing.CheckLinearizability(content, false, 3, 1)
-	// historyFilePath := "1.txt"
-	// linearizable := rqlite.CheckHistory(historyFilePath, false /*delFile*/)
-	// fmt.Println(linearizable)
 	// fuzzing.WriteStats(testCaseStats, 3, 1)
 }

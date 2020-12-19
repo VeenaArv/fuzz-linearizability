@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // Event is a struct
@@ -25,7 +24,6 @@ type AlgoRunParams struct {
 }
 
 func createEvents(numEvents int) []Event {
-	rand.Seed(time.Now().Unix())
 	events := []Event{}
 
 	ops := []string{"Write", "Read"}
@@ -33,7 +31,7 @@ func createEvents(numEvents int) []Event {
 	for i := 0; i < numEvents; i++ {
 		op := ops[rand.Intn(2)]
 		val := rand.Intn(50)
-		pid := rand.Intn(4) + 1 // 1-based
+		pid := rand.Intn(5) + 1 // 1-based
 		events = append(events, Event{op, val, pid})
 	}
 
