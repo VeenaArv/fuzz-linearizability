@@ -216,7 +216,8 @@ func RunOperations(input string, filePath string, strongReadConsistency bool, de
 			}
 		}()
 	}
-
+	time.Sleep(15 * time.Second)
+	table.DeleteTable()
 	wg.Wait()
 	// go func() {
 	// 	history <- "done"
@@ -228,7 +229,6 @@ func RunOperations(input string, filePath string, strongReadConsistency bool, de
 	// } else {
 	// 	fmt.Println("File writing failed")
 	// }
-	// table.DeleteTable()
 }
 
 func worker(pid int, channel chan string, table *Table, history chan string, wg *sync.WaitGroup, delays bool) {
